@@ -4,47 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Course - Learning App</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-DZ6AFxxVa1JJ7XOvFHagiJYagFM3kG9AmZUCr+v++uWfmxs9yL4wqhNJJTymehLd" crossorigin="anonymous">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="dashboard.html">Learning App</a>
-      <div class="d-flex ms-auto align-items-center">
-        <img id="navProfilePic" src="" alt="Profile" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover; display:none;">
-        <span id="welcomeName" class="navbar-text me-3"></span>
-        <a href="dashboard.html" class="btn btn-outline-secondary btn-sm me-2">Dashboard</a>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
-      </div>
+<body>
+  <nav class="navbar">
+    <a href="dashboard.html" class="brand">Learning App</a>
+    <div class="nav-actions">
+      <img id="navProfilePic" src="" alt="Profile" class="profile-pic" style="display:none;">
+      <span id="welcomeName"></span>
+      <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+      <button id="logoutBtn" class="btn btn-danger">Logout</button>
     </div>
   </nav>
-  <div class="container mt-4">
-    <!-- Course header -->
-    <div class="row mb-4">
-      <div class="col-12 col-md-8">
-        <h2 id="courseTitle" class="fw-bold"></h2>
-        <p id="courseDescription" class="lead text-muted"></p>
-      </div>
-      <div class="col-12 col-md-4 d-flex flex-column align-items-start align-items-md-end">
-        <!-- Progress card -->
-        <div class="card w-100">
-          <div class="card-body">
-            <h5 class="card-title">Progress</h5>
-            <div class="progress mb-3" style="height: 20px;">
-              <div class="progress-bar" id="progressBar" role="progressbar" style="width:0%" aria-valuemin="0" aria-valuemax="100">0%</div>
-            </div>
-            <button id="increaseProgressBtn" class="btn btn-primary w-100">Mark Progress +10%</button>
-          </div>
-        </div>
-        <a href="dashboard.html" class="btn btn-link mt-3">&laquo; Back to Dashboard</a>
-      </div>
-    </div>
-    <!-- Course content -->
-    <div class="row">
-      <div class="col-12">
+  <div class="container">
+    <div class="grid grid-2" style="align-items: start; gap: 2rem; margin-top:2rem;">
+      <div>
+        <h2 id="courseTitle" style="margin-bottom:0.5rem;"></h2>
+        <p id="courseDescription" class="text-muted" style="margin-bottom:1rem;"></p>
         <h3>Course Content</h3>
         <div id="courseContent" class="mb-3"></div>
         <ul id="moduleList" class="list-group"></ul>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Progress</h3>
+          <div class="progress-container" style="margin-bottom:1rem;">
+            <div class="progress-bar" id="progressBar" role="progressbar" style="width:0%">0%</div>
+          </div>
+          <button id="increaseProgressBtn" class="btn btn-primary" style="width:100%;">Mark Progress +10%</button>
+        </div>
+        <a href="dashboard.html" class="btn btn-outline" style="margin-top:1rem; display:inline-block;">&laquo; Back to Dashboard</a>
       </div>
     </div>
   </div>

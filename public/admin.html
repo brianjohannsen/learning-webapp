@@ -4,58 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - Learning App</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-DZ6AFxxVa1JJ7XOvFHagiJYagFM3kG9AmZUCr+v++uWfmxs9yL4wqhNJJTymehLd" crossorigin="anonymous">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="dashboard.html">Learning App</a>
-      <div class="d-flex ms-auto align-items-center">
-        <img id="navProfilePic" src="" alt="Profile" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover; display:none;">
-        <span id="welcomeName" class="navbar-text me-3"></span>
-        <a href="dashboard.html" class="btn btn-outline-secondary btn-sm me-2">Dashboard</a>
-        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
-      </div>
+<body>
+  <nav class="navbar">
+    <a href="dashboard.html" class="brand">Learning App</a>
+    <div class="nav-actions">
+      <img id="navProfilePic" src="" alt="Profile" class="profile-pic" style="display:none;">
+      <span id="welcomeName"></span>
+      <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+      <button id="logoutBtn" class="btn btn-danger">Logout</button>
     </div>
   </nav>
-  <div class="container mt-4">
+  <div class="container">
     <h2>Admin Dashboard</h2>
     <div id="accessDenied" class="alert alert-danger d-none">Access denied. You do not have permission to view this page.</div>
     <div id="adminContent" style="display:none;">
-      <section class="mt-4">
+      <section style="margin-top: 2rem;">
         <h3>Add New Course</h3>
-        <form id="addCourseForm" class="row g-3">
-          <div class="col-md-4">
-            <label for="courseTitle" class="form-label">Title</label>
-            <input type="text" class="form-control" id="courseTitle" required>
+        <form id="addCourseForm" class="grid grid-2" style="gap: 1rem;">
+          <div>
+            <label for="courseTitle">Title</label>
+            <input type="text" id="courseTitle" required>
           </div>
-          <div class="col-md-4">
-            <label for="courseDescription" class="form-label">Description</label>
-            <input type="text" class="form-control" id="courseDescription">
+          <div>
+            <label for="courseDescription">Description</label>
+            <input type="text" id="courseDescription">
           </div>
-          <div class="col-12">
-            <label for="courseContent" class="form-label">Content</label>
-            <textarea id="courseContent" class="form-control" rows="4"></textarea>
+          <div style="grid-column: 1 / -1;">
+            <label for="courseContent">Content</label>
+            <textarea id="courseContent" rows="4"></textarea>
           </div>
-          <div class="col-12">
-            <button type="submit" class="btn btn-success">Add Course</button>
+          <div style="grid-column: 1 / -1;">
+            <button type="submit" class="btn btn-primary">Add Course</button>
           </div>
         </form>
         <div id="addCourseMsg" class="mt-2"></div>
       </section>
-      <section class="mt-5">
+      <section style="margin-top: 3rem;">
         <h3>All Courses</h3>
-        <table class="table table-bordered" id="coursesTable">
-          <thead class="table-light">
+        <table class="table" id="coursesTable">
+          <thead>
             <tr><th>ID</th><th>Title</th><th>Description</th></tr>
           </thead>
           <tbody></tbody>
         </table>
       </section>
-      <section class="mt-5">
+      <section style="margin-top: 3rem;">
         <h3>All Users</h3>
-        <table class="table table-bordered" id="usersTable">
-          <thead class="table-light">
+        <table class="table" id="usersTable">
+          <thead>
             <tr><th>ID</th><th>Name</th><th>Email</th></tr>
           </thead>
           <tbody></tbody>
