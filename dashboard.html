@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Learning App</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-DZ6AFxxVa1JJ7XOvFHagiJYagFM3kG9AmZUCr+v++uWfmxs9yL4wqhNJJTymehLd" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">Learning App</a>
+      <div class="d-flex ms-auto align-items-center">
+        <img id="navProfilePic" src="" alt="Profile" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover; display:none;">
+        <span id="welcomeName" class="navbar-text me-3"></span>
+        <a href="profile.html" class="btn btn-outline-secondary btn-sm me-2">Profile</a>
+        <a href="admin.html" id="adminLink" class="btn btn-outline-secondary btn-sm me-2" style="display:none;">Admin</a>
+        <button class="btn btn-outline-danger btn-sm" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+  <div class="container mt-4">
+    <h2>My Courses</h2>
+    <div id="coursesContainer" class="row row-cols-1 row-cols-md-2 g-4 mt-2"></div>
+  </div>
+  <script>
+    // Check authentication on page load
+    const userId = localStorage.getItem('userId');
+    const welcomeNameEl = document.getElementById('welcomeName');
+    const navPicEl = document.getElementById('navProfilePic');
+    if (!userId) {
+      // If not logged in, redirect to login
+      window.location.href = 'index.html';
+    } else {
+      // Load user details to update name and profile picture
+      loadUserDetails();
+      loadCourses();
+    }
+
+    // Logout button clears localStorage and redirects to login
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('profilePicture');
+      window.location.href = 'index.html';
+    });
+
+    // Load user details (name, picture) and update nav
+    async function loadUserDetails() {
+      try {
+        const res = await fetch(`/api/user/${userId}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load user');
+        // Update name and profile picture
+        welcomeNameEl.textContent = `Hello, ${data.name}!`;
+        localStorage.setItem('userName', data.name);
+        if (data.profilePicture) {
+          navPicEl.src = data.profilePicture;
+          navPicEl.style.display = 'block';
+          localStorage.setItem('profilePicture', data.profilePicture);
+        } else {
+          navPicEl.style.display = 'none';
+          localStorage.removeItem('profilePicture');
+        }
+        // If current user is admin (id === 1), show admin link
+        const adminLinkEl = document.getElementById('adminLink');
+        if (parseInt(userId) === 1 && adminLinkEl) {
+          adminLinkEl.style.display = 'inline-block';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    // Fetch courses from server and render them with user progress
+    async function loadCourses() {
+      try {
+        const [coursesRes, userCoursesRes] = await Promise.all([
+          fetch('/api/courses'),
+          fetch(`/api/user/${userId}/courses`)
+        ]);
+        const courses = await coursesRes.json();
+        const userCourses = await userCoursesRes.json();
+        const courseMap = new Map(courses.map(c => [c.id, c]));
+        const container = document.getElementById('coursesContainer');
+        container.innerHTML = '';
+        userCourses.forEach(uc => {
+          const course = courseMap.get(uc.id);
+          if (!course) return;
+          const progress = uc.progress;
+          const col = document.createElement('div');
+          col.className = 'col';
+          col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title mb-3">${course.title}</h5>
+                <div class="progress mb-3" style="height: 20px;">
+                  <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">${progress}%</div>
+                </div>
+                <div class="d-flex flex-wrap mt-auto gap-2">
+                  <button class="btn btn-primary flex-grow-1" onclick="updateProgress(${course.id}, ${progress})">Mark Progress +10%</button>
+                  <a href="course.html?id=${course.id}" class="btn btn-outline-secondary flex-grow-1">Open</a>
+                </div>
+              </div>
+            </div>
+          `;
+          container.appendChild(col);
+        });
+      } catch (err) {
+        console.error('Failed to load courses:', err);
+      }
+    }
+
+    // Update course progress by 10% increments
+    async function updateProgress(courseId, current) {
+      const newProgress = Math.min(100, current + 10);
+      try {
+        const res = await fetch(`/api/user/${userId}/course/${courseId}/progress`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ progress: newProgress })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update progress');
+        // Reload courses to reflect updated progress
+        loadCourses();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
