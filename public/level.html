@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Level - Learning App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="dashboard.html" class="brand">Learning App</a>
+    <div class="nav-actions">
+      <img id="navProfilePic" src="" alt="Profile" class="profile-pic" style="display:none;">
+      <span id="welcomeName"></span>
+      <a href="profile.html" class="btn btn-secondary">Profile</a>
+      <a href="admin.html" id="adminLink" class="btn btn-secondary" style="display:none;">Admin</a>
+      <button class="btn btn-danger" id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+  <div class="container">
+    <h2 id="levelTitle" style="margin-top:1rem;">Level</h2>
+    <p id="levelDescription"></p>
+    <div id="levelContent" style="margin-bottom:1rem;"></div>
+    <h3 style="margin-top:1rem;">Knowledge</h3>
+    <div id="knowledgeContainer" style="margin-bottom:1rem;"></div>
+    <div id="submissionSection">
+      <h3>Submit your work</h3>
+      <input type="file" id="fileInput" accept="*/*">
+      <button class="btn btn-primary" id="submitBtn" style="margin-left:0.5rem;">Submit</button>
+      <div id="submissionStatus" style="margin-top:0.5rem; color:#6c757d;"></div>
+    </div>
+    <div id="adminSubmissions" style="display:none; margin-top:2rem;">
+      <h3>Submissions</h3>
+      <div id="submissionsTable"></div>
+    </div>
+  </div>
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      window.location.href = 'index.html';
+    }
+    // Logout button
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('profilePicture');
+      window.location.href = 'index.html';
+    });
+    // Update nav
+    function updateNav() {
+      const name = localStorage.getItem('userName');
+      const welcomeNameEl = document.getElementById('welcomeName');
+      const navPicEl = document.getElementById('navProfilePic');
+      if (name) welcomeNameEl.textContent = `Hello, ${name}!`;
+      const pic = localStorage.getItem('profilePicture');
+      if (pic) {
+        navPicEl.src = pic;
+        navPicEl.style.display = 'block';
+      } else {
+        navPicEl.src = 'default_profile.png';
+        navPicEl.style.display = 'block';
+      }
+      const adminLinkEl = document.getElementById('adminLink');
+      if (parseInt(userId) === 1 && adminLinkEl) {
+        adminLinkEl.style.display = 'inline-block';
+      }
+    }
+    updateNav();
+    const params = new URLSearchParams(window.location.search);
+    const levelId = parseInt(params.get('id'), 10);
+    let currentLevel = null;
+    async function loadLevel() {
+      try {
+        const res = await fetch(`/api/levels/${levelId}?userId=${userId}`);
+        const data = await res.json();
+        currentLevel = data;
+        document.getElementById('levelTitle').textContent = data.title || 'Level';
+        document.getElementById('levelDescription').textContent = data.description || '';
+        // Render content as paragraphs
+        const contentEl = document.getElementById('levelContent');
+        contentEl.innerHTML = '';
+        if (data.content) {
+          data.content.split(/\n+/).forEach((para) => {
+            const p = document.createElement('p');
+            p.textContent = para.trim();
+            contentEl.appendChild(p);
+          });
+        }
+        // Render knowledge entries
+        const knowledgeEl = document.getElementById('knowledgeContainer');
+        knowledgeEl.innerHTML = '';
+        (data.knowledgeDetails || []).forEach((k) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.marginBottom = '0.5rem';
+          card.innerHTML = `<h4>${k.title}</h4><p>${k.description || ''}</p>`;
+          knowledgeEl.appendChild(card);
+        });
+        // Update submission UI based on status
+        const submissionSection = document.getElementById('submissionSection');
+        const statusDiv = document.getElementById('submissionStatus');
+        if (data.status === 'approved') {
+          submissionSection.style.display = 'none';
+          statusDiv.textContent = 'Your work on this level has been approved.';
+        } else if (data.status === 'submitted') {
+          submissionSection.style.display = 'none';
+          statusDiv.textContent = 'Your submission is awaiting review.';
+        } else if (data.status === 'rejected') {
+          submissionSection.style.display = 'block';
+          statusDiv.textContent = 'Your previous submission was rejected. Please resubmit.';
+        } else {
+          submissionSection.style.display = 'block';
+          statusDiv.textContent = '';
+        }
+        // If admin, load submissions table
+        if (parseInt(userId) === 1) {
+          loadSubmissions();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    async function loadSubmissions() {
+      try {
+        const res = await fetch(`/api/levels/${levelId}/submissions`);
+        const submissions = await res.json();
+        const container = document.getElementById('submissionsTable');
+        container.innerHTML = '';
+        submissions.forEach((s) => {
+          const row = document.createElement('div');
+          row.className = 'card';
+          row.style.marginBottom = '0.5rem';
+          row.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:0.25rem;">
+              <div><strong>User:</strong> ${s.userId}</div>
+              <div><strong>Status:</strong> ${s.status}</div>
+              <div><a href="${s.filePath}" class="btn btn-secondary" target="_blank">Download</a></div>
+              <div style="display:flex; gap:0.5rem;">
+                <button class="btn btn-primary" onclick="updateSubmission(${s.id}, 'approved')">Approve</button>
+                <button class="btn btn-danger" onclick="updateSubmission(${s.id}, 'rejected')">Reject</button>
+              </div>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+        if (submissions.length > 0) {
+          document.getElementById('adminSubmissions').style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    async function updateSubmission(subId, status) {
+      const comment = prompt('Enter feedback (optional):');
+      try {
+        const res = await fetch(`/api/admin/submissions/${subId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, comment })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Failed to update submission');
+          return;
+        }
+        alert('Submission updated');
+        loadLevel();
+        loadSubmissions();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    // File submission handler
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please choose a file to upload.');
+        return;
+      }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const fileData = reader.result;
+        try {
+          const res = await fetch(`/api/levels/${levelId}/submissions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, fileData, fileName: file.name })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            alert(data.error || 'Submission failed');
+            return;
+          }
+          alert('Submission uploaded successfully');
+          loadLevel();
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    loadLevel();
+  </script>
+</body>
+</html>
