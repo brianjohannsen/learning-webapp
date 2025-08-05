@@ -53,6 +53,39 @@
         <h3>All Users</h3>
         <div id="usersGrid" class="grid grid-3"></div>
       </section>
+      <section style="margin-top:3rem;">
+        <h3>Add New Level</h3>
+        <form id="addLevelForm" class="grid grid-2" style="gap:1rem;">
+          <div>
+            <label for="levelCourse">Course</label>
+            <select id="levelCourse" required></select>
+          </div>
+          <div>
+            <label for="levelTitle">Title</label>
+            <input type="text" id="levelTitle" required>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelDescription">Description</label>
+            <textarea id="levelDescription" rows="3"></textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelContent">Content</label>
+            <textarea id="levelContent" rows="4"></textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelMaterials">Materials (comma separated links)</label>
+            <input type="text" id="levelMaterials">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelKnowledge">Knowledge (comma separated IDs)</label>
+            <input type="text" id="levelKnowledge">
+          </div>
+          <div style="grid-column:1/-1;">
+            <button type="submit" class="btn btn-primary">Add Level</button>
+          </div>
+        </form>
+        <div id="addLevelMsg" class="mt-2"></div>
+      </section>
     </div>
   </div>
   <script>
@@ -117,11 +150,25 @@
               ${imgHtml}
               <h4 style="margin:0.5rem 0;">${course.title}</h4>
               <p style="flex-grow:1;">${course.description || ''}</p>
-              <a href="course.html?id=${course.id}" class="btn btn-outline" style="margin-top:auto;">Open</a>
+              <div style="margin-top:auto; display:flex; gap:0.5rem;">
+                <a href="levels.html?id=${course.id}" class="btn btn-outline" style="flex:1;">Open</a>
+                <a href="admin-course.html?id=${course.id}" class="btn btn-primary" style="flex:1;">Manage</a>
+              </div>
             </div>
           `;
           container.appendChild(card);
         });
+        // Populate course dropdown for adding levels
+        const courseSelect = document.getElementById('levelCourse');
+        if (courseSelect) {
+          courseSelect.innerHTML = '';
+          courses.forEach(course => {
+            const opt = document.createElement('option');
+            opt.value = course.id;
+            opt.textContent = course.title;
+            courseSelect.appendChild(opt);
+          });
+        }
       } catch (err) {
         console.error(err);
       }
@@ -194,6 +241,49 @@
         submitCourse(null);
       }
     });
+
+    // Handle add level form submission
+    const addLevelFormEl = document.getElementById('addLevelForm');
+    if (addLevelFormEl) {
+      addLevelFormEl.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const courseId = document.getElementById('levelCourse').value;
+        const title = document.getElementById('levelTitle').value.trim();
+        const description = document.getElementById('levelDescription').value.trim();
+        const content = document.getElementById('levelContent').value.trim();
+        const materialsInput = document.getElementById('levelMaterials').value.trim();
+        const knowledgeInput = document.getElementById('levelKnowledge').value.trim();
+        const materials = materialsInput ? materialsInput.split(',').map(s => s.trim()).filter(s => s) : [];
+        const knowledgeIds = knowledgeInput ? knowledgeInput.split(',').map(s => s.trim()).filter(s => s) : [];
+        const msg = document.getElementById('addLevelMsg');
+        msg.classList.remove('alert','alert-success','alert-danger');
+        fetch('/api/admin/levels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId, title, description, content, materials, knowledge: knowledgeIds })
+        }).then(async res => {
+          const data = await res.json();
+          return { ok: res.ok, data };
+        }).then(result => {
+          if (!result.ok) {
+            msg.textContent = result.data.error || 'Failed to add level';
+            msg.classList.add('alert','alert-danger');
+            return;
+          }
+          msg.textContent = 'Level added successfully';
+          msg.classList.add('alert','alert-success');
+          document.getElementById('levelTitle').value = '';
+          document.getElementById('levelDescription').value = '';
+          document.getElementById('levelContent').value = '';
+          document.getElementById('levelMaterials').value = '';
+          document.getElementById('levelKnowledge').value = '';
+          loadCourses();
+        }).catch(err => {
+          msg.textContent = err.message;
+          msg.classList.add('alert','alert-danger');
+        });
+      });
+    }
   </script>
 </body>
 </html>

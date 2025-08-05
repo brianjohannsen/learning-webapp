@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Course - Learning App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="dashboard.html" class="brand">Learning App</a>
+    <div class="nav-actions">
+      <img id="navProfilePic" src="" alt="Profile" class="profile-pic" style="display:none;">
+      <span id="welcomeName"></span>
+      <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+      <a href="admin.html" class="btn btn-secondary">Admin</a>
+      <button id="logoutBtn" class="btn btn-danger">Logout</button>
+    </div>
+  </nav>
+  <div class="container">
+    <h2>Admin - Manage Course</h2>
+    <div id="accessDenied" class="alert alert-danger d-none">Access denied. You do not have permission to view this page.</div>
+    <div id="courseContent" style="display:none;">
+      <section style="margin-top:1.5rem;">
+        <h3>Course Details</h3>
+        <form id="courseForm" class="grid grid-2" style="gap:1rem;">
+          <div style="grid-column:1/-1;">
+            <label for="editCourseTitle">Title</label>
+            <input type="text" id="editCourseTitle" required>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="editCourseDescription">Description</label>
+            <input type="text" id="editCourseDescription">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="editCourseContent">Content</label>
+            <textarea id="editCourseContent" rows="4"></textarea>
+          </div>
+          <div>
+            <label for="editCourseImage">New Image (optional)</label>
+            <input type="file" id="editCourseImage" accept="image/*">
+          </div>
+          <div style="display:flex; align-items:center;">
+            <input type="checkbox" id="removeCourseImage" style="margin-right:0.5rem;">
+            <label for="removeCourseImage">Remove existing image</label>
+          </div>
+          <div style="grid-column:1/-1;">
+            <button type="submit" class="btn btn-primary">Update Course</button>
+          </div>
+        </form>
+        <div id="courseUpdateMsg" class="mt-2"></div>
+      </section>
+      <section style="margin-top:2rem;">
+        <h3>Levels</h3>
+        <div id="levelsList" class="grid grid-2"></div>
+        <h4 style="margin-top:1.5rem;">Add New Level</h4>
+        <form id="addLevelForm" class="grid grid-2" style="gap:1rem;">
+          <div style="grid-column:1/-1;">
+            <label for="levelTitle">Title</label>
+            <input type="text" id="levelTitle" required>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelDescription">Description</label>
+            <textarea id="levelDescription" rows="3"></textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelContent">Content</label>
+            <textarea id="levelContent" rows="4"></textarea>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelMaterials">Materials (comma separated links)</label>
+            <input type="text" id="levelMaterials">
+          </div>
+          <div style="grid-column:1/-1;">
+            <label for="levelKnowledge">Knowledge (comma separated IDs)</label>
+            <input type="text" id="levelKnowledge">
+          </div>
+          <div style="grid-column:1/-1;">
+            <button type="submit" class="btn btn-primary">Add Level</button>
+          </div>
+        </form>
+        <div id="addLevelMsg" class="mt-2"></div>
+      </section>
+    </div>
+  </div>
+  <script>
+    // Authentication and role check
+    const currentUserId = parseInt(localStorage.getItem('userId'), 10);
+    const welcomeNameEl = document.getElementById('welcomeName');
+    const navPicEl = document.getElementById('navProfilePic');
+    if (!currentUserId) {
+      window.location.href = 'index.html';
+    }
+    // Update nav info
+    function updateNav() {
+      const name = localStorage.getItem('userName');
+      if (name) welcomeNameEl.textContent = `Hello, ${name}!`;
+      const pic = localStorage.getItem('profilePicture');
+      if (pic) {
+        navPicEl.src = pic;
+        navPicEl.style.display = 'block';
+      } else {
+        navPicEl.src = 'default_profile.png';
+        navPicEl.style.display = 'block';
+      }
+    }
+    updateNav();
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('profilePicture');
+      window.location.href = 'index.html';
+    });
+    const accessDeniedEl = document.getElementById('accessDenied');
+    const contentEl = document.getElementById('courseContent');
+    if (currentUserId !== 1) {
+      accessDeniedEl.classList.remove('d-none');
+      contentEl.style.display = 'none';
+    } else {
+      contentEl.style.display = 'block';
+      // Parse course ID from URL
+      const params = new URLSearchParams(window.location.search);
+      const courseId = parseInt(params.get('id'), 10);
+      if (!courseId) {
+        document.getElementById('courseUpdateMsg').textContent = 'Course not found';
+      } else {
+        loadCourseDetails(courseId);
+        loadLevels(courseId);
+        // Setup update course form
+        document.getElementById('courseForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          updateCourse(courseId);
+        });
+        // Handle add level
+        document.getElementById('addLevelForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          addLevel(courseId);
+        });
+      }
+    }
+    // Load course details into form
+    async function loadCourseDetails(id) {
+      try {
+        const res = await fetch(`/api/courses/${id}`);
+        const course = await res.json();
+        if (!res.ok) throw new Error(course.error || 'Failed to load course');
+        document.getElementById('editCourseTitle').value = course.title || '';
+        document.getElementById('editCourseDescription').value = course.description || '';
+        document.getElementById('editCourseContent').value = course.content || '';
+        // Reset remove image checkbox
+        document.getElementById('removeCourseImage').checked = false;
+      } catch (err) {
+        document.getElementById('courseUpdateMsg').textContent = err.message;
+      }
+    }
+    // Update course
+    async function updateCourse(id) {
+      const title = document.getElementById('editCourseTitle').value.trim();
+      const description = document.getElementById('editCourseDescription').value.trim();
+      const content = document.getElementById('editCourseContent').value.trim();
+      const imgInput = document.getElementById('editCourseImage');
+      const removeImg = document.getElementById('removeCourseImage').checked;
+      const msgEl = document.getElementById('courseUpdateMsg');
+      msgEl.classList.remove('alert','alert-success','alert-danger');
+      const payload = { title, description, content };
+      if (removeImg) payload.image = null;
+      function sendUpdate(imageData) {
+        if (imageData) payload.imageData = imageData;
+        fetch(`/api/admin/courses/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(async res => {
+          const data = await res.json();
+          return { ok: res.ok, data };
+        }).then(result => {
+          if (!result.ok) {
+            msgEl.textContent = result.data.error || 'Failed to update course';
+            msgEl.classList.add('alert','alert-danger');
+            return;
+          }
+          msgEl.textContent = 'Course updated successfully';
+          msgEl.classList.add('alert','alert-success');
+          // Refresh details and levels
+          loadCourseDetails(id);
+          loadLevels(id);
+        }).catch(err => {
+          msgEl.textContent = err.message;
+          msgEl.classList.add('alert','alert-danger');
+        });
+      }
+      if (imgInput && imgInput.files && imgInput.files[0]) {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+          sendUpdate(reader.result);
+        };
+        reader.readAsDataURL(imgInput.files[0]);
+      } else {
+        sendUpdate();
+      }
+    }
+    // Load levels for the course
+    async function loadLevels(courseId) {
+      try {
+        const res = await fetch(`/api/courses/${courseId}/levels`);
+        const levels = await res.json();
+        const container = document.getElementById('levelsList');
+        container.innerHTML = '';
+        if (!Array.isArray(levels) || levels.length === 0) {
+          container.textContent = 'No levels yet.';
+          return;
+        }
+        levels.sort((a,b) => a.id - b.id);
+        levels.forEach(level => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <div style="padding:1rem;">
+              <h4 style="margin-bottom:0.5rem;">${level.title}</h4>
+              <p style="margin-bottom:0.5rem;">${level.description || ''}</p>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    // Add level to course
+    async function addLevel(courseId) {
+      const title = document.getElementById('levelTitle').value.trim();
+      const description = document.getElementById('levelDescription').value.trim();
+      const content = document.getElementById('levelContent').value.trim();
+      const materialsInput = document.getElementById('levelMaterials').value.trim();
+      const knowledgeInput = document.getElementById('levelKnowledge').value.trim();
+      const materials = materialsInput ? materialsInput.split(',').map(s => s.trim()).filter(s => s) : [];
+      const knowledgeIds = knowledgeInput ? knowledgeInput.split(',').map(s => s.trim()).filter(s => s) : [];
+      const msgEl = document.getElementById('addLevelMsg');
+      msgEl.classList.remove('alert','alert-success','alert-danger');
+      fetch('/api/admin/levels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, title, description, content, materials, knowledge: knowledgeIds })
+      }).then(async res => {
+        const data = await res.json();
+        return { ok: res.ok, data };
+      }).then(result => {
+        if (!result.ok) {
+          msgEl.textContent = result.data.error || 'Failed to add level';
+          msgEl.classList.add('alert','alert-danger');
+          return;
+        }
+        msgEl.textContent = 'Level added successfully';
+        msgEl.classList.add('alert','alert-success');
+        document.getElementById('levelTitle').value = '';
+        document.getElementById('levelDescription').value = '';
+        document.getElementById('levelContent').value = '';
+        document.getElementById('levelMaterials').value = '';
+        document.getElementById('levelKnowledge').value = '';
+        loadLevels(courseId);
+      }).catch(err => {
+        msgEl.textContent = err.message;
+        msgEl.classList.add('alert','alert-danger');
+      });
+    }
+  </script>
+</body>
+</html>

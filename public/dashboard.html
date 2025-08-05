@@ -20,8 +20,12 @@
     </div>
   </nav>
   <div class="container">
+    <!-- Points and badges display -->
+    <div id="pointsBadges" style="margin-bottom: 1rem;"></div>
     <h2 style="margin-bottom: 1rem;">My Courses</h2>
     <div id="coursesContainer" class="grid grid-2"></div>
+    <h2 style="margin: 2rem 0 1rem;">Available Courses</h2>
+    <div id="availableCoursesContainer" class="grid grid-2"></div>
   </div>
   <script>
     // Check authentication on page load
@@ -69,6 +73,13 @@
         if (parseInt(userId) === 1 && adminLinkEl) {
           adminLinkEl.style.display = 'inline-block';
         }
+        // Show points and badges
+        const pbEl = document.getElementById('pointsBadges');
+        let badgesHtml = '';
+        if (Array.isArray(data.badges) && data.badges.length > 0) {
+          badgesHtml = data.badges.map(b => `<span style="display:inline-block;margin-right:0.5rem;padding:0.25rem 0.5rem;border-radius:12px;background-color:#f0ad4e;color:#fff;font-size:0.75rem;">${b}</span>`).join(' ');
+        }
+        pbEl.innerHTML = `<strong>Points:</strong> ${data.points || 0} ${badgesHtml ? ' &nbsp; <strong>Badges:</strong> ' + badgesHtml : ''}`;
       } catch (err) {
         console.error(err);
       }
@@ -83,19 +94,21 @@
         const courses = await coursesRes.json();
         const userCourses = await userCoursesRes.json();
         const courseMap = new Map(courses.map(c => [c.id, c]));
-        const container = document.getElementById('coursesContainer');
-        container.innerHTML = '';
+        const enrolledIds = new Set(userCourses.map(uc => uc.id));
+        const coursesContainer = document.getElementById('coursesContainer');
+        const availableContainer = document.getElementById('availableCoursesContainer');
+        coursesContainer.innerHTML = '';
+        availableContainer.innerHTML = '';
+        // Render enrolled courses
         userCourses.forEach(uc => {
           const course = courseMap.get(uc.id);
           if (!course) return;
           const progress = uc.progress;
           const div = document.createElement('div');
-          // Build course card with image if available
           let imgHtml;
           if (course.image) {
             imgHtml = `<img src="${course.image}" alt="${course.title}">`;
           } else {
-            // Show default placeholder image when no course image is set
             imgHtml = `<img src="default_course.png" alt="${course.title}">`;
           }
           div.innerHTML = `
@@ -107,11 +120,34 @@
               </div>
               <div style="margin-top: auto; display: flex; gap: 0.5rem;">
                 <button class="btn btn-primary" style="flex:1;" onclick="updateProgress(${course.id}, ${progress})">Mark Progress +10%</button>
-                <a href="course.html?id=${course.id}" class="btn btn-outline" style="flex:1;">Open</a>
+                <a href="levels.html?id=${course.id}" class="btn btn-outline" style="flex:1;">Open</a>
               </div>
             </div>
           `;
-          container.appendChild(div);
+          coursesContainer.appendChild(div);
+        });
+        // Render available courses not enrolled
+        courses.forEach(course => {
+          if (enrolledIds.has(course.id)) return;
+          const div = document.createElement('div');
+          let imgHtml;
+          if (course.image) {
+            imgHtml = `<img src="${course.image}" alt="${course.title}">`;
+          } else {
+            imgHtml = `<img src="default_course.png" alt="${course.title}">`;
+          }
+          div.innerHTML = `
+            <div class="card course-card" style="display: flex; flex-direction: column; height: 100%;">
+              ${imgHtml}
+              <h3 style="margin-bottom: 0.5rem;">${course.title}</h3>
+              <p style="flex-grow:1;">${course.description || ''}</p>
+              <div style="margin-top: auto; display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary" style="flex:1;" onclick="enroll(${course.id})">Enroll</button>
+                <a href="levels.html?id=${course.id}" class="btn btn-outline" style="flex:1;">Open</a>
+              </div>
+            </div>
+          `;
+          availableContainer.appendChild(div);
         });
       } catch (err) {
         console.error('Failed to load courses:', err);
@@ -133,6 +169,20 @@
         loadCourses();
       } catch (err) {
         console.error(err);
+      }
+    }
+
+    // Enroll user in a course
+    async function enroll(courseId) {
+      try {
+        const res = await fetch(`/api/user/${userId}/courses/${courseId}/enroll`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to enroll');
+        // Reload courses to update lists
+        loadCourses();
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
       }
     }
   </script>
