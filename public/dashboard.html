@@ -59,7 +59,9 @@
           navPicEl.style.display = 'block';
           localStorage.setItem('profilePicture', data.profilePicture);
         } else {
-          navPicEl.style.display = 'none';
+          // Use default placeholder image when no profile picture is set
+          navPicEl.src = 'default_profile.png';
+          navPicEl.style.display = 'block';
           localStorage.removeItem('profilePicture');
         }
         // If current user is admin (id === 1), show admin link
@@ -93,7 +95,8 @@
           if (course.image) {
             imgHtml = `<img src="${course.image}" alt="${course.title}">`;
           } else {
-            imgHtml = `<div style="background-color:#f0f0f0;height:150px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>`;
+            // Show default placeholder image when no course image is set
+            imgHtml = `<img src="default_course.png" alt="${course.title}">`;
           }
           div.innerHTML = `
             <div class="card course-card" style="display: flex; flex-direction: column; height: 100%;">
