@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Learning App</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1" id="username">Dashboard</span>
+      <button class="btn btn-outline-secondary" id="logout">Logout</button>
+    </div>
+  </nav>
+  <div class="container mt-4">
+    <h3 class="mb-3">Your Courses</h3>
+    <div id="courses-container"></div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function loadDashboard() {
+      const userId = localStorage.getItem('currentUserId');
+      if (!userId) {
+        window.location.href = 'index.html';
+        return;
+      }
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+      // Set username in navbar
+      document.getElementById('username').textContent = user.name + "'s Dashboard";
+      const container = document.getElementById('courses-container');
+      container.innerHTML = '';
+      user.courses.forEach((course, index) => {
+        const card = document.createElement('div');
+        card.className = 'card mb-3';
+        card.innerHTML = `
+          <div class="card-body">
+            <h5 class="card-title">${course.name}</h5>
+            <div class="progress mb-2">
+              <div class="progress-bar" role="progressbar" style="width: ${course.progress}%" aria-valuenow="${course.progress}" aria-valuemin="0" aria-valuemax="100">${course.progress}%</div>
+            </div>
+            <button class="btn btn-sm btn-primary" data-index="${index}">Update Progress</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      // Attach click listener for update buttons
+      container.addEventListener('click', function(event) {
+        if (event.target.tagName === 'BUTTON') {
+          const idx = parseInt(event.target.getAttribute('data-index'));
+          // Increase progress by 10%, max 100
+          user.courses[idx].progress = Math.min(user.courses[idx].progress + 10, 100);
+          // Save updated users back to localStorage
+          const updatedUsers = users.map(u => u.id === user.id ? user : u);
+          localStorage.setItem('users', JSON.stringify(updatedUsers));
+          // Reload dashboard to show updated progress
+          loadDashboard();
+        }
+      }, { once: true });
+    }
+    // Logout handler
+    document.getElementById('logout').addEventListener('click', function() {
+      localStorage.removeItem('currentUserId');
+      window.location.href = 'index.html';
+    });
+    // Initialize dashboard on load
+    window.onload = loadDashboard;
+  </script>
+</body>
+</html>
