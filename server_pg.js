@@ -64,6 +64,46 @@ function authenticate(req, res, next) {
 }
 
 /*
+ * Additional helper endpoints
+ */
+
+// Get a single user by ID. Only returns the user ID and email.
+app.get('/api/user/:id', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  try {
+    if (!pool) return res.status(500).json({ error: 'Database not configured' });
+    const result = await pool.query('SELECT id, email FROM users WHERE id = $1', [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    // Return a simplified user object (we don't store names)
+    return res.json({ id: result.rows[0].id, email: result.rows[0].email });
+  } catch (err) {
+    console.error('Error fetching user', err);
+    return res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// List all levels for a course
+app.get('/api/courses/:id/levels', async (req, res) => {
+  const courseId = parseInt(req.params.id, 10);
+  if (Number.isNaN(courseId)) {
+    return res.status(400).json({ error: 'Invalid course ID' });
+  }
+  try {
+    if (!pool) return res.status(500).json({ error: 'Database not configured' });
+    const result = await pool.query('SELECT * FROM levels WHERE course_id = $1 ORDER BY id', [courseId]);
+    return res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching levels for course', err);
+    return res.status(500).json({ error: 'Failed to fetch levels for course' });
+  }
+});
+
+/*
  * Authentication endpoints
  */
 
