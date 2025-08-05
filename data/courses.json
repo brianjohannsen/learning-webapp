@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "title": "Introduction to the Platform",
+    "description": "Learn about the basics of this learning platform.",
+    "content": "Welcome to the introduction course."
+  },
+  {
+    "id": 2,
+    "title": "Advanced Concepts",
+    "description": "Dive deeper into advanced topics.",
+    "content": "This course covers advanced concepts."
+  },
+  {
+    "id": 3,
+    "title": "Practical Exercises",
+    "description": "Hands-on exercises to practice what you have learned.",
+    "content": "Here you will find practical exercises."
+  }
+]
