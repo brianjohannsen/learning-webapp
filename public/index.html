@@ -48,7 +48,8 @@
       const errorDiv = document.getElementById('loginError');
       errorDiv.classList.add('d-none');
       try {
-        const res = await fetch('/api/login', {
+        // Call the authentication endpoint instead of the old API
+        const res = await fetch('/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -57,20 +58,18 @@
         if (!res.ok) {
           throw new Error(data.error || 'Login failed');
         }
-        // Save user ID, name and profile picture to localStorage
-        localStorage.setItem('userId', data.id);
-        localStorage.setItem('userName', data.name);
-        if (data.profilePicture) {
-          localStorage.setItem('profilePicture', data.profilePicture);
-        } else {
-          localStorage.removeItem('profilePicture');
-        }
+        // Save the JWT-like token and user ID in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.userId);
+        // Store the email as userName for display purposes since the API does not return a name
+        localStorage.setItem('userName', email);
+        // Clear any old profile picture reference
+        localStorage.removeItem('profilePicture');
         // Determine selected role
         const role = document.querySelector('input[name="role"]:checked').value;
-        // If admin role selected, ensure the user is admin (id 1)
+        // If admin role selected, ensure the user is admin (userId === 1)
         if (role === 'admin') {
-          if (data.id === 1) {
-            // Redirect admin to admin page
+          if (data.userId === 1) {
             window.location.href = 'admin.html';
           } else {
             throw new Error('Du har ikke administratorrettigheder');
