@@ -67,35 +67,24 @@
         if (course && course.title) {
           document.getElementById('courseTitle').textContent = `${course.title} - Levels`;
         }
-        const res = await fetch(`/api/courses/${courseId}/levels?userId=${userId}`);
+        const res = await fetch(`/api/courses/${courseId}/levels`);
         const levels = await res.json();
         const container = document.getElementById('levelsContainer');
         container.innerHTML = '';
         // Sort by id ascending
         levels.sort((a, b) => a.id - b.id);
-        levels.forEach((lvl, index) => {
-          const status = lvl.status || 'not_started';
-          let statusColor = '#6c757d';
-          if (status === 'in_progress') statusColor = '#17a2b8';
-          if (status === 'submitted') statusColor = '#ffc107';
-          if (status === 'approved') statusColor = '#28a745';
-          if (status === 'rejected') statusColor = '#dc3545';
-          // Determine if level is locked (require previous level approval)
-          let locked = false;
-          if (index > 0) {
-            const prev = levels[index - 1];
-            if (prev.status !== 'approved') {
-              locked = true;
-            }
-          }
+        levels.forEach((lvl) => {
+          // In PG version we don't track status or locking; mark all as not started
+          const statusColor = '#6c757d';
+          const statusLabel = 'not started';
           const card = document.createElement('div');
           card.innerHTML = `
             <div class="card" style="padding:1rem; margin-bottom:1rem;">
               <h3 style="margin-bottom:0.5rem;">${lvl.title}</h3>
               <p style="margin-bottom:0.5rem;">${lvl.description || ''}</p>
-              <span style="display:inline-block; padding:0.25rem 0.5rem; border-radius:12px; background-color:${statusColor}; color:#fff; font-size:0.8rem; text-transform:capitalize;">${status.replace('_', ' ')}</span>
+              <span style="display:inline-block; padding:0.25rem 0.5rem; border-radius:12px; background-color:${statusColor}; color:#fff; font-size:0.8rem; text-transform:capitalize;">${statusLabel}</span>
               <div style="margin-top:0.75rem;">
-                <a href="level.html?id=${lvl.id}" class="btn btn-primary" ${locked ? 'style="pointer-events:none; opacity:0.5;"' : ''}>Open Level</a>
+                <a href="level.html?id=${lvl.id}" class="btn btn-primary">Open Level</a>
               </div>
             </div>
           `;
