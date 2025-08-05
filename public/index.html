@@ -24,6 +24,18 @@
               <label for="password" class="form-label">Password</label>
               <input type="password" class="form-control" id="password" placeholder="Enter password" required>
             </div>
+            <!-- Role selection for admin vs. regular user -->
+            <div class="mb-3">
+              <label class="form-label">Login as</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="role" id="role-user" value="user" checked>
+                <label class="form-check-label" for="role-user">Almindelig bruger</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="role" id="role-admin" value="admin">
+                <label class="form-check-label" for="role-admin">Administrator</label>
+              </div>
+            </div>
             <div class="d-grid">
               <button type="submit" class="btn btn-primary">Login</button>
             </div>
@@ -62,8 +74,20 @@
         } else {
           localStorage.removeItem('profilePicture');
         }
-        // Redirect to dashboard
-        window.location.href = 'dashboard.html';
+        // Determine selected role
+        const role = document.querySelector('input[name="role"]:checked').value;
+        // If admin role selected, ensure the user is admin (id 1)
+        if (role === 'admin') {
+          if (data.id === 1) {
+            // Redirect admin to admin page
+            window.location.href = 'admin.html';
+          } else {
+            throw new Error('Du har ikke administratorrettigheder');
+          }
+        } else {
+          // Regular user goes to dashboard
+          window.location.href = 'dashboard.html';
+        }
       } catch (err) {
         errorDiv.textContent = err.message;
         errorDiv.classList.remove('d-none');
