@@ -80,7 +80,9 @@
         navPicEl.src = pic;
         navPicEl.style.display = 'block';
       } else {
-        navPicEl.style.display = 'none';
+        // Show default profile placeholder when no picture is available
+        navPicEl.src = 'default_profile.png';
+        navPicEl.style.display = 'block';
       }
     }
     updateNav();
@@ -107,7 +109,8 @@
           if (course.image) {
             imgHtml = `<img src="${course.image}" alt="${course.title}">`;
           } else {
-            imgHtml = '<div style="background-color:#f0f0f0;height:150px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>';
+            // Use default course placeholder image when none provided
+            imgHtml = `<img src="default_course.png" alt="${course.title}">`;
           }
           card.innerHTML = `
             <div class="course-card" style="display:flex;flex-direction:column;height:100%;">
