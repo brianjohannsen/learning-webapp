@@ -22,10 +22,9 @@
   <div class="container">
     <!-- Points and badges display -->
     <div id="pointsBadges" style="margin-bottom: 1rem;"></div>
-    <h2 style="margin-bottom: 1rem;">My Courses</h2>
+    <h2 style="margin-bottom: 1rem;">Courses</h2>
+    <!-- Container for all courses -->
     <div id="coursesContainer" class="grid grid-2"></div>
-    <h2 style="margin: 2rem 0 1rem;">Available Courses</h2>
-    <div id="availableCoursesContainer" class="grid grid-2"></div>
   </div>
   <script>
     // Check authentication on page load
@@ -55,31 +54,20 @@
         const res = await fetch(`/api/user/${userId}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load user');
-        // Update name and profile picture
-        welcomeNameEl.textContent = `Hello, ${data.name}!`;
-        localStorage.setItem('userName', data.name);
-        if (data.profilePicture) {
-          navPicEl.src = data.profilePicture;
-          navPicEl.style.display = 'block';
-          localStorage.setItem('profilePicture', data.profilePicture);
-        } else {
-          // Use default placeholder image when no profile picture is set
-          navPicEl.src = 'default_profile.png';
-          navPicEl.style.display = 'block';
-          localStorage.removeItem('profilePicture');
-        }
+        // Update email as name (we only store email)
+        welcomeNameEl.textContent = `Hello, ${data.email}!`;
+        localStorage.setItem('userName', data.email);
+        // Profile pictures are not stored in the PG version; always use default
+        navPicEl.src = 'default_profile.png';
+        navPicEl.style.display = 'block';
         // If current user is admin (id === 1), show admin link
         const adminLinkEl = document.getElementById('adminLink');
         if (parseInt(userId) === 1 && adminLinkEl) {
           adminLinkEl.style.display = 'inline-block';
         }
-        // Show points and badges
+        // Clear points/badges since they are not implemented in PG version
         const pbEl = document.getElementById('pointsBadges');
-        let badgesHtml = '';
-        if (Array.isArray(data.badges) && data.badges.length > 0) {
-          badgesHtml = data.badges.map(b => `<span style="display:inline-block;margin-right:0.5rem;padding:0.25rem 0.5rem;border-radius:12px;background-color:#f0ad4e;color:#fff;font-size:0.75rem;">${b}</span>`).join(' ');
-        }
-        pbEl.innerHTML = `<strong>Points:</strong> ${data.points || 0} ${badgesHtml ? ' &nbsp; <strong>Badges:</strong> ' + badgesHtml : ''}`;
+        pbEl.innerHTML = '';
       } catch (err) {
         console.error(err);
       }
@@ -87,49 +75,13 @@
     // Fetch courses from server and render them with user progress
     async function loadCourses() {
       try {
-        const [coursesRes, userCoursesRes] = await Promise.all([
-          fetch('/api/courses'),
-          fetch(`/api/user/${userId}/courses`)
-        ]);
-        const courses = await coursesRes.json();
-        const userCourses = await userCoursesRes.json();
-        const courseMap = new Map(courses.map(c => [c.id, c]));
-        const enrolledIds = new Set(userCourses.map(uc => uc.id));
-        const coursesContainer = document.getElementById('coursesContainer');
-        const availableContainer = document.getElementById('availableCoursesContainer');
-        coursesContainer.innerHTML = '';
-        availableContainer.innerHTML = '';
-        // Render enrolled courses
-        userCourses.forEach(uc => {
-          const course = courseMap.get(uc.id);
-          if (!course) return;
-          const progress = uc.progress;
-          const div = document.createElement('div');
-          let imgHtml;
-          if (course.image) {
-            imgHtml = `<img src="${course.image}" alt="${course.title}">`;
-          } else {
-            imgHtml = `<img src="default_course.png" alt="${course.title}">`;
-          }
-          div.innerHTML = `
-            <div class="card course-card" style="display: flex; flex-direction: column; height: 100%;">
-              ${imgHtml}
-              <h3 style="margin-bottom: 0.5rem;">${course.title}</h3>
-              <div class="progress-container" style="margin-bottom: 1rem;">
-                <div class="progress-bar" role="progressbar" style="width: ${progress}%">${progress}%</div>
-              </div>
-              <div style="margin-top: auto; display: flex; gap: 0.5rem;">
-                <button class="btn btn-primary" style="flex:1;" onclick="updateProgress(${course.id}, ${progress})">Mark Progress +10%</button>
-                <a href="levels.html?id=${course.id}" class="btn btn-outline" style="flex:1;">Open</a>
-              </div>
-            </div>
-          `;
-          coursesContainer.appendChild(div);
-        });
-        // Render available courses not enrolled
+        const res = await fetch('/api/courses');
+        const courses = await res.json();
+        const container = document.getElementById('coursesContainer');
+        container.innerHTML = '';
         courses.forEach(course => {
-          if (enrolledIds.has(course.id)) return;
           const div = document.createElement('div');
+          // Display course image or placeholder
           let imgHtml;
           if (course.image) {
             imgHtml = `<img src="${course.image}" alt="${course.title}">`;
@@ -137,54 +89,23 @@
             imgHtml = `<img src="default_course.png" alt="${course.title}">`;
           }
           div.innerHTML = `
-            <div class="card course-card" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="card course-card" style="display:flex; flex-direction:column; height:100%;">
               ${imgHtml}
-              <h3 style="margin-bottom: 0.5rem;">${course.title}</h3>
+              <h3 style="margin-bottom:0.5rem;">${course.title}</h3>
               <p style="flex-grow:1;">${course.description || ''}</p>
-              <div style="margin-top: auto; display: flex; gap: 0.5rem;">
-                <button class="btn btn-primary" style="flex:1;" onclick="enroll(${course.id})">Enroll</button>
-                <a href="levels.html?id=${course.id}" class="btn btn-outline" style="flex:1;">Open</a>
+              <div style="margin-top:auto;">
+                <a href="levels.html?id=${course.id}" class="btn btn-primary" style="width:100%;">Open</a>
               </div>
             </div>
           `;
-          availableContainer.appendChild(div);
+          container.appendChild(div);
         });
       } catch (err) {
         console.error('Failed to load courses:', err);
       }
     }
 
-    // Update course progress by 10% increments
-    async function updateProgress(courseId, current) {
-      const newProgress = Math.min(100, current + 10);
-      try {
-        const res = await fetch(`/api/user/${userId}/course/${courseId}/progress`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ progress: newProgress })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update progress');
-        // Reload courses to reflect updated progress
-        loadCourses();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // Enroll user in a course
-    async function enroll(courseId) {
-      try {
-        const res = await fetch(`/api/user/${userId}/courses/${courseId}/enroll`, { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to enroll');
-        // Reload courses to update lists
-        loadCourses();
-      } catch (err) {
-        console.error(err);
-        alert(err.message);
-      }
-    }
+    // Progress and enroll features are not implemented in the PG version
   </script>
 </body>
 </html>
