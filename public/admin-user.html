@@ -50,7 +50,9 @@
       navPicEl.src = pic;
       navPicEl.style.display = 'block';
     } else {
-      navPicEl.style.display = 'none';
+      // Display default profile placeholder when user has no picture
+      navPicEl.src = 'default_profile.png';
+      navPicEl.style.display = 'block';
     }
   }
   updateNav();
