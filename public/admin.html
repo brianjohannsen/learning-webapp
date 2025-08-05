@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin - Learning App</title>
-  <!-- Custom styles -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,9 +20,9 @@
     <h2>Admin Dashboard</h2>
     <div id="accessDenied" class="alert alert-danger d-none">Access denied. You do not have permission to view this page.</div>
     <div id="adminContent" style="display:none;">
-      <section style="margin-top: 2rem;">
+      <section style="margin-top:2rem;">
         <h3>Add New Course</h3>
-        <form id="addCourseForm" class="grid grid-2" style="gap: 1rem;">
+        <form id="addCourseForm" class="grid grid-2" style="gap:1rem;">
           <div>
             <label for="courseTitle">Title</label>
             <input type="text" id="courseTitle" required>
@@ -31,6 +30,10 @@
           <div>
             <label for="courseDescription">Description</label>
             <input type="text" id="courseDescription">
+          </div>
+          <div>
+            <label for="courseImage">Image</label>
+            <input type="file" id="courseImage" accept="image/*">
           </div>
           <div style="grid-column: 1 / -1;">
             <label for="courseContent">Content</label>
@@ -42,138 +45,152 @@
         </form>
         <div id="addCourseMsg" class="mt-2"></div>
       </section>
-      <section style="margin-top: 3rem;">
+      <section style="margin-top:3rem;">
         <h3>All Courses</h3>
-        <table class="table" id="coursesTable">
-          <thead>
-            <tr><th>ID</th><th>Title</th><th>Description</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div id="coursesGrid" class="grid grid-3"></div>
       </section>
-      <section style="margin-top: 3rem;">
+      <section style="margin-top:3rem;">
         <h3>All Users</h3>
-        <table class="table" id="usersTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div id="usersGrid" class="grid grid-3"></div>
       </section>
     </div>
   </div>
-<script>
-  const userId = parseInt(localStorage.getItem('userId'), 10);
-  const welcomeNameEl = document.getElementById('welcomeName');
-  const navPicEl = document.getElementById('navProfilePic');
-  const accessDeniedEl = document.getElementById('accessDenied');
-  const adminContentEl = document.getElementById('adminContent');
-  if (!userId) {
-    window.location.href = 'index.html';
-  }
-  // Logout functionality
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('profilePicture');
-    window.location.href = 'index.html';
-  });
-  // Setup nav info from storage
-  function updateNav() {
-    const name = localStorage.getItem('userName');
-    if (name) welcomeNameEl.textContent = `Hello, ${name}!`;
-    const pic = localStorage.getItem('profilePicture');
-    if (pic) {
-      navPicEl.src = pic;
-      navPicEl.style.display = 'block';
-    } else {
-      navPicEl.style.display = 'none';
+  <script>
+    const userId = parseInt(localStorage.getItem('userId'), 10);
+    const welcomeNameEl = document.getElementById('welcomeName');
+    const navPicEl = document.getElementById('navProfilePic');
+    const accessDeniedEl = document.getElementById('accessDenied');
+    const adminContentEl = document.getElementById('adminContent');
+    if (!userId) {
+      window.location.href = 'index.html';
     }
-  }
-  updateNav();
-  // Only allow user with id 1 as admin (simple check)
-  if (userId !== 1) {
-    accessDeniedEl.classList.remove('d-none');
-    adminContentEl.style.display = 'none';
-  } else {
-    adminContentEl.style.display = 'block';
-    loadCourses();
-    loadUsers();
-  }
-  // Load courses list
-  async function loadCourses() {
-    try {
-      const res = await fetch('/api/courses');
-      const courses = await res.json();
-      const tbody = document.querySelector('#coursesTable tbody');
-      tbody.innerHTML = '';
-      courses.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${c.id}</td>
-          <td><a href="course.html?id=${c.id}" target="_blank">${c.title}</a></td>
-          <td>${c.description || ''}</td>`;
-        tbody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  // Load users list
-  async function loadUsers() {
-    try {
-      const res = await fetch('/api/admin/users');
-      const users = await res.json();
-      const tbody = document.querySelector('#usersTable tbody');
-      tbody.innerHTML = '';
-      users.forEach(u => {
-        const tr = document.createElement('tr');
-        // Make user name clickable to view their profile in admin mode
-        tr.innerHTML = `<td>${u.id}</td><td><a href="admin-user.html?id=${u.id}" style="color:#007bff;text-decoration:none;">${u.name}</a></td><td>${u.email}</td>`;
-        tbody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  // Handle add course form submission
-  document.getElementById('addCourseForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const title = document.getElementById('courseTitle').value.trim();
-    const description = document.getElementById('courseDescription').value.trim();
-    const content = document.getElementById('courseContent').value.trim();
-    const msgDiv = document.getElementById('addCourseMsg');
-    msgDiv.classList.remove('alert-success','alert-danger');
-    try {
-      const res = await fetch('/api/admin/courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, content })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        msgDiv.textContent = data.error || 'Failed to add course';
-        msgDiv.classList.add('alert','alert-danger');
-        return;
+    // Logout functionality
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('profilePicture');
+      window.location.href = 'index.html';
+    });
+    // Setup nav info from storage
+    function updateNav() {
+      const name = localStorage.getItem('userName');
+      if (name) welcomeNameEl.textContent = `Hello, ${name}!`;
+      const pic = localStorage.getItem('profilePicture');
+      if (pic) {
+        navPicEl.src = pic;
+        navPicEl.style.display = 'block';
+      } else {
+        navPicEl.style.display = 'none';
       }
-      msgDiv.textContent = 'Course added successfully';
-      msgDiv.classList.add('alert','alert-success');
-      // Clear form
-      document.getElementById('courseTitle').value = '';
-      document.getElementById('courseDescription').value = '';
-      document.getElementById('courseContent').value = '';
-      // reload lists
+    }
+    updateNav();
+    // Only allow user with id 1 as admin (simple check)
+    if (userId !== 1) {
+      accessDeniedEl.classList.remove('d-none');
+      adminContentEl.style.display = 'none';
+    } else {
+      adminContentEl.style.display = 'block';
       loadCourses();
       loadUsers();
-    } catch (err) {
-      msgDiv.textContent = err.message;
-      msgDiv.classList.add('alert','alert-danger');
     }
-  });
-</script>
+    // Load courses list and render as cards
+    async function loadCourses() {
+      try {
+        const res = await fetch('/api/courses');
+        const courses = await res.json();
+        const container = document.getElementById('coursesGrid');
+        container.innerHTML = '';
+        courses.forEach(course => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          let imgHtml;
+          if (course.image) {
+            imgHtml = `<img src="${course.image}" alt="${course.title}">`;
+          } else {
+            imgHtml = '<div style="background-color:#f0f0f0;height:150px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>';
+          }
+          card.innerHTML = `
+            <div class="course-card" style="display:flex;flex-direction:column;height:100%;">
+              ${imgHtml}
+              <h4 style="margin:0.5rem 0;">${course.title}</h4>
+              <p style="flex-grow:1;">${course.description || ''}</p>
+              <a href="course.html?id=${course.id}" class="btn btn-outline" style="margin-top:auto;">Open</a>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    // Load users list and render as cards
+    async function loadUsers() {
+      try {
+        const res = await fetch('/api/admin/users');
+        const users = await res.json();
+        const container = document.getElementById('usersGrid');
+        container.innerHTML = '';
+        users.forEach(u => {
+          const card = document.createElement('div');
+          card.className = 'card user-card';
+          card.innerHTML = `
+            <h4 style="margin-bottom:0.5rem;">${u.name}</h4>
+            <p style="margin-bottom:0.5rem;">${u.email}</p>
+            <a href="admin-user.html?id=${u.id}" class="btn btn-outline">View</a>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    // Handle add course form submission, including optional image upload
+    document.getElementById('addCourseForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('courseTitle').value.trim();
+      const description = document.getElementById('courseDescription').value.trim();
+      const content = document.getElementById('courseContent').value.trim();
+      const imageInput = document.getElementById('courseImage');
+      const msgDiv = document.getElementById('addCourseMsg');
+      msgDiv.classList.remove('alert-success','alert-danger');
+      function submitCourse(imageData) {
+        fetch('/api/admin/courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description, content, imageData })
+        }).then(async res => {
+          const data = await res.json();
+          return { ok: res.ok, data };
+        }).then(result => {
+          if (!result.ok) {
+            msgDiv.textContent = result.data.error || 'Failed to add course';
+            msgDiv.classList.add('alert','alert-danger');
+            return;
+          }
+            msgDiv.textContent = 'Course added successfully';
+            msgDiv.classList.add('alert','alert-success');
+            // clear form
+            document.getElementById('courseTitle').value = '';
+            document.getElementById('courseDescription').value = '';
+            document.getElementById('courseContent').value = '';
+            document.getElementById('courseImage').value = '';
+            loadCourses();
+            loadUsers();
+        }).catch(err => {
+          msgDiv.textContent = err.message;
+          msgDiv.classList.add('alert','alert-danger');
+        });
+      }
+      if (imageInput && imageInput.files && imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+          submitCourse(reader.result);
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      } else {
+        submitCourse(null);
+      }
+    });
+  </script>
 </body>
 </html>

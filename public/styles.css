@@ -256,6 +256,21 @@ textarea {
   border-bottom: none;
 }
 
+/* Course card image styling */
+.course-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 0.5rem;
+}
+
+/* User card styling can reuse .card with minimal overrides */
+.user-card {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Course tag used in admin user view to show enrolled courses */
 .course-tag {
   display: inline-block;

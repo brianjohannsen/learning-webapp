@@ -20,6 +20,7 @@
   <div class="container">
     <div class="grid grid-2" style="align-items: start; gap: 2rem; margin-top:2rem;">
       <div>
+        <div id="courseImageContainer"></div>
         <h2 id="courseTitle" style="margin-bottom:0.5rem;"></h2>
         <p id="courseDescription" class="text-muted" style="margin-bottom:1rem;"></p>
         <h3>Course Content</h3>
@@ -95,6 +96,22 @@
       if (!courseRes.ok) throw new Error(course.error || 'Course not found');
       document.getElementById('courseTitle').textContent = course.title;
       document.getElementById('courseDescription').textContent = course.description || '';
+      // Render course image if exists
+      const imgContainer = document.getElementById('courseImageContainer');
+      if (imgContainer) {
+        imgContainer.innerHTML = '';
+        if (course.image) {
+          const img = document.createElement('img');
+          img.src = course.image;
+          img.alt = course.title;
+          img.style.width = '100%';
+          img.style.height = '200px';
+          img.style.objectFit = 'cover';
+          img.style.borderRadius = '4px';
+          img.style.marginBottom = '1rem';
+          imgContainer.appendChild(img);
+        }
+      }
       // Render course content as paragraphs and modules list
       const contentEl = document.getElementById('courseContent');
       const moduleListEl = document.getElementById('moduleList');

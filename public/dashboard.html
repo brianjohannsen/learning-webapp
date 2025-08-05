@@ -88,9 +88,16 @@
           if (!course) return;
           const progress = uc.progress;
           const div = document.createElement('div');
-          // card markup using custom styles
+          // Build course card with image if available
+          let imgHtml;
+          if (course.image) {
+            imgHtml = `<img src="${course.image}" alt="${course.title}">`;
+          } else {
+            imgHtml = `<div style="background-color:#f0f0f0;height:150px;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>`;
+          }
           div.innerHTML = `
-            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="card course-card" style="display: flex; flex-direction: column; height: 100%;">
+              ${imgHtml}
               <h3 style="margin-bottom: 0.5rem;">${course.title}</h3>
               <div class="progress-container" style="margin-bottom: 1rem;">
                 <div class="progress-bar" role="progressbar" style="width: ${progress}%">${progress}%</div>
