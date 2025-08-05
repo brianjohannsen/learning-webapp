@@ -19,16 +19,34 @@
     </div>
   </nav>
   <div class="container mt-4">
-    <h2 id="courseTitle"></h2>
-    <p id="courseDescription" class="text-muted"></p>
-    <div id="courseContent" class="mb-4"></div>
-    <div class="mb-4">
-      <div class="progress" style="height: 20px;">
-        <div class="progress-bar" id="progressBar" role="progressbar" style="width:0%" aria-valuemin="0" aria-valuemax="100">0%</div>
+    <!-- Course header -->
+    <div class="row mb-4">
+      <div class="col-12 col-md-8">
+        <h2 id="courseTitle" class="fw-bold"></h2>
+        <p id="courseDescription" class="lead text-muted"></p>
       </div>
-      <button id="increaseProgressBtn" class="btn btn-primary mt-2">Mark Progress +10%</button>
+      <div class="col-12 col-md-4 d-flex flex-column align-items-start align-items-md-end">
+        <!-- Progress card -->
+        <div class="card w-100">
+          <div class="card-body">
+            <h5 class="card-title">Progress</h5>
+            <div class="progress mb-3" style="height: 20px;">
+              <div class="progress-bar" id="progressBar" role="progressbar" style="width:0%" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
+            <button id="increaseProgressBtn" class="btn btn-primary w-100">Mark Progress +10%</button>
+          </div>
+        </div>
+        <a href="dashboard.html" class="btn btn-link mt-3">&laquo; Back to Dashboard</a>
+      </div>
     </div>
-    <a href="dashboard.html" class="btn btn-outline-secondary">Back to Dashboard</a>
+    <!-- Course content -->
+    <div class="row">
+      <div class="col-12">
+        <h3>Course Content</h3>
+        <div id="courseContent" class="mb-3"></div>
+        <ul id="moduleList" class="list-group"></ul>
+      </div>
+    </div>
   </div>
 <script>
   const userId = localStorage.getItem('userId');
@@ -76,7 +94,31 @@
       if (!courseRes.ok) throw new Error(course.error || 'Course not found');
       document.getElementById('courseTitle').textContent = course.title;
       document.getElementById('courseDescription').textContent = course.description || '';
-      document.getElementById('courseContent').textContent = course.content || '';
+      // Render course content as paragraphs and modules list
+      const contentEl = document.getElementById('courseContent');
+      const moduleListEl = document.getElementById('moduleList');
+      contentEl.innerHTML = '';
+      moduleListEl.innerHTML = '';
+      if (course.content) {
+        // Split content by double newline to separate intro and modules
+        const parts = course.content.split(/\n\n+/);
+        // First part as introduction text
+        const intro = parts.shift();
+        if (intro) {
+          const p = document.createElement('p');
+          p.textContent = intro;
+          contentEl.appendChild(p);
+        }
+        // Remaining parts as modules
+        if (parts.length > 0) {
+          parts.forEach((mod, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.innerHTML = `<strong>Module ${index + 1}:</strong> ${mod.trim()}`;
+            moduleListEl.appendChild(li);
+          });
+        }
+      }
       const uc = userCourses.find(c => c.id === course.id) || { progress: 0 };
       updateProgressBar(uc.progress);
       document.getElementById('increaseProgressBtn').onclick = () => markProgress(uc.progress);

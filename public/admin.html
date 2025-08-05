@@ -110,7 +110,10 @@
       tbody.innerHTML = '';
       courses.forEach(c => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${c.id}</td><td>${c.title}</td><td>${c.description || ''}</td>`;
+        tr.innerHTML = `
+          <td>${c.id}</td>
+          <td><a href="course.html?id=${c.id}" target="_blank">${c.title}</a></td>
+          <td>${c.description || ''}</td>`;
         tbody.appendChild(tr);
       });
     } catch (err) {
