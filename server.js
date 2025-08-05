@@ -292,6 +292,65 @@ const server = http.createServer(async (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       return res.end(JSON.stringify(sanitized));
     }
+
+    // Admin: get a single user by id (without password) including their course progress
+    if (req.method === 'GET' && /^\/api\/admin\/users\/\d+$/.test(pathname)) {
+      const userId = parseInt(pathname.split('/')[4], 10);
+      const users = readUsers();
+      const user = users.find((u) => u.id === userId);
+      if (!user) {
+        res.statusCode = 404;
+        return res.end(JSON.stringify({ error: 'User not found.' }));
+      }
+      const { password: pw, ...userWithoutPassword } = user;
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify(userWithoutPassword));
+    }
+
+    // Admin: delete a user by id
+    if (req.method === 'DELETE' && /^\/api\/admin\/users\/\d+$/.test(pathname)) {
+      const userId = parseInt(pathname.split('/')[4], 10);
+      let users = readUsers();
+      const index = users.findIndex((u) => u.id === userId);
+      if (index === -1) {
+        res.statusCode = 404;
+        return res.end(JSON.stringify({ error: 'User not found.' }));
+      }
+      // Remove user from array
+      users.splice(index, 1);
+      writeUsers(users);
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({ success: true }));
+    }
+
+    // Admin: remove a user from a specific course
+    if (req.method === 'DELETE' && /^\/api\/admin\/users\/\d+\/courses\/\d+$/.test(pathname)) {
+      const parts = pathname.split('/');
+      const userId = parseInt(parts[4], 10);
+      const courseId = parseInt(parts[6], 10);
+      const users = readUsers();
+      const user = users.find((u) => u.id === userId);
+      if (!user) {
+        res.statusCode = 404;
+        return res.end(JSON.stringify({ error: 'User not found.' }));
+      }
+      // Remove the course progress entry from user's courses
+      user.courses = user.courses.filter((c) => c.id !== courseId);
+      writeUsers(users);
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({ success: true }));
+    }
+
+    // Get list of users enrolled in a specific course (admin view)
+    if (req.method === 'GET' && /^\/api\/courses\/\d+\/users$/.test(pathname)) {
+      const courseId = parseInt(pathname.split('/')[3], 10);
+      const users = readUsers();
+      const enrolled = users
+        .filter((u) => Array.isArray(u.courses) && u.courses.some((c) => c.id === courseId))
+        .map(({ password, ...rest }) => rest);
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify(enrolled));
+    }
     // Get a user profile (without password)
     if (req.method === 'GET' && /^\/api\/user\/\d+$/.test(pathname)) {
       const userId = parseInt(pathname.split('/')[3], 10);
