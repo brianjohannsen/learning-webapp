@@ -73,7 +73,9 @@
       navPicEl.src = pic;
       navPicEl.style.display = 'block';
     } else {
-      navPicEl.style.display = 'none';
+      // Display default profile placeholder when user has no profile picture
+      navPicEl.src = 'default_profile.png';
+      navPicEl.style.display = 'block';
     }
   }
   updateNav();
@@ -103,6 +105,17 @@
         if (course.image) {
           const img = document.createElement('img');
           img.src = course.image;
+          img.alt = course.title;
+          img.style.width = '100%';
+          img.style.height = '200px';
+          img.style.objectFit = 'cover';
+          img.style.borderRadius = '4px';
+          img.style.marginBottom = '1rem';
+          imgContainer.appendChild(img);
+        } else {
+          // Show default course placeholder when no image provided
+          const img = document.createElement('img');
+          img.src = 'default_course.png';
           img.alt = course.title;
           img.style.width = '100%';
           img.style.height = '200px';
