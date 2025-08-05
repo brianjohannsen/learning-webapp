@@ -73,8 +73,10 @@
         profileImg.src = data.profilePicture;
         localStorage.setItem('profilePicture', data.profilePicture);
       } else {
-        navPicEl.style.display = 'none';
-        profileImg.src = 'https://via.placeholder.com/200?text=No+Image';
+        // Use default placeholder images when no profile picture is set
+        navPicEl.src = 'default_profile.png';
+        navPicEl.style.display = 'block';
+        profileImg.src = 'default_profile.png';
         localStorage.removeItem('profilePicture');
       }
       document.getElementById('profileName').value = data.name;
