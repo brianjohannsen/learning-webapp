@@ -54,9 +54,14 @@
         if (!res.ok) {
           throw new Error(data.error || 'Login failed');
         }
-        // Save user ID and name to localStorage
+        // Save user ID, name and profile picture to localStorage
         localStorage.setItem('userId', data.id);
         localStorage.setItem('userName', data.name);
+        if (data.profilePicture) {
+          localStorage.setItem('profilePicture', data.profilePicture);
+        } else {
+          localStorage.removeItem('profilePicture');
+        }
         // Redirect to dashboard
         window.location.href = 'dashboard.html';
       } catch (err) {
