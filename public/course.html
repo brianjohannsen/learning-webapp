@@ -36,6 +36,17 @@
         </div>
         <a href="dashboard.html" class="btn btn-outline" style="margin-top:1rem; display:inline-block;">&laquo; Back to Dashboard</a>
       </div>
+      </div>
+      <!-- Admin section: list of enrolled users -->
+      <div id="adminUsersSection" style="margin-top:2rem; display:none;">
+        <h3>Enrolled Users</h3>
+        <table class="table" id="adminUsersTable">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Actions</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 <script>
@@ -112,6 +123,10 @@
       const uc = userCourses.find(c => c.id === course.id) || { progress: 0 };
       updateProgressBar(uc.progress);
       document.getElementById('increaseProgressBtn').onclick = () => markProgress(uc.progress);
+      // If current user is admin (ID 1), load enrolled users list
+      if (parseInt(userId, 10) === 1) {
+        loadEnrolledUsers();
+      }
     } catch (err) {
       console.error(err);
     }
@@ -134,6 +149,49 @@
       updateProgressBar(newProgress);
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  // Load list of users enrolled in this course (admin view)
+  async function loadEnrolledUsers() {
+    const section = document.getElementById('adminUsersSection');
+    const tbody = document.querySelector('#adminUsersTable tbody');
+    try {
+      const res = await fetch(`/api/courses/${courseId}/users`);
+      const users = await res.json();
+      section.style.display = 'block';
+      tbody.innerHTML = '';
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.id}</td>
+          <td><a href="admin-user.html?id=${u.id}" style="color:#007bff;text-decoration:none;">${u.name}</a></td>
+          <td>${u.email}</td>
+          <td><button class="btn btn-danger" data-user-id="${u.id}">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+      // Attach event listeners to remove buttons
+      tbody.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const uid = parseInt(e.target.getAttribute('data-user-id'), 10);
+          removeUserFromCourse(uid);
+        });
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  // Remove a user from this course (admin)
+  async function removeUserFromCourse(uid) {
+    if (!confirm('Remove this user from the course?')) return;
+    try {
+      const res = await fetch(`/api/admin/users/${uid}/courses/${courseId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove user from course');
+      // reload list
+      loadEnrolledUsers();
+    } catch (err) {
+      alert(err.message);
     }
   }
 </script>

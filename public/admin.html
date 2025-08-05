@@ -55,7 +55,11 @@
         <h3>All Users</h3>
         <table class="table" id="usersTable">
           <thead>
-            <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -128,7 +132,8 @@
       tbody.innerHTML = '';
       users.forEach(u => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${u.id}</td><td>${u.name}</td><td>${u.email}</td>`;
+        // Make user name clickable to view their profile in admin mode
+        tr.innerHTML = `<td>${u.id}</td><td><a href="admin-user.html?id=${u.id}" style="color:#007bff;text-decoration:none;">${u.name}</a></td><td>${u.email}</td>`;
         tbody.appendChild(tr);
       });
     } catch (err) {

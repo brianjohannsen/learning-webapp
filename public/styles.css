@@ -255,3 +255,21 @@ textarea {
 .list-group-item:last-child {
   border-bottom: none;
 }
+
+/* Course tag used in admin user view to show enrolled courses */
+.course-tag {
+  display: inline-block;
+  background-color: #e6f0ff;
+  color: #004085;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  margin: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Small utility class to hide elements */
+.hidden {
+  display: none !important;
+}
